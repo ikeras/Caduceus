@@ -23,6 +23,14 @@ class Pcx:
     def get_display_size(self):
         return (self.header.x_max - self.header.x_min + 1, self.header.y_max - self.header.y_min + 1)        
     
+    @property
+    def height(self):
+        return self.header.y_max - self.header.y_min + 1
+    
+    @property
+    def width(self):
+        return self.header.x_max - self.header.x_min + 1        
+    
     def _read_palette(self, f):
         # seek to the end of the file and then back 768 bytes to read the palette
         f.seek(self.palette_offset, 2)
