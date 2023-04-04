@@ -11,8 +11,13 @@ from pygame.locals import *
 from graphics import Graphics
 from model import QuakeModel
 from point2d import Point2d
+from render_type import RenderType
 
-def draw_model_frame(graphics: Graphics, model: QuakeModel, buffer):
+buffer = np.zeros((1000, 1000), dtype=np.uint32)
+
+def draw_model_frame(graphics: Graphics, model: QuakeModel, surface: pygame.Surface):
+    global buffer
+    
     triangles = []
     
     for triangle in model.triangle_in_frame():
@@ -20,14 +25,22 @@ def draw_model_frame(graphics: Graphics, model: QuakeModel, buffer):
   
     triangles.sort(key=lambda triangle: triangle.z_center)
     
+    if model.render_type == RenderType.TEXTURED:
+        buffer.fill(0)
+    else:
+        surface.fill(0)
+        
     for triangle in triangles:
-        graphics.draw_textured_triangle(triangle.face, buffer)
+        if model.render_type == RenderType.TEXTURED:
+            graphics.draw_textured_triangle(triangle.face, buffer)
+        else:
+            pygame.draw.line(surface, (255, 255, 255), dc.astuple(triangle.face.triangle_verts[0]), dc.astuple(triangle.face.triangle_verts[1]))
+            pygame.draw.line(surface, (255, 255, 255), dc.astuple(triangle.face.triangle_verts[1]), dc.astuple(triangle.face.triangle_verts[2]))
+            pygame.draw.line(surface, (255, 255, 255), dc.astuple(triangle.face.triangle_verts[2]), dc.astuple(triangle.face.triangle_verts[0]))
     
-    # for triangle in triangles:
-    #     pygame.draw.line(buffer, (255, 255, 255), dc.astuple(triangle.face.triangle_verts[0]), dc.astuple(triangle.face.triangle_verts[1]))
-    #     pygame.draw.line(buffer, (255, 255, 255), dc.astuple(triangle.face.triangle_verts[1]), dc.astuple(triangle.face.triangle_verts[2]))
-    #     pygame.draw.line(buffer, (255, 255, 255), dc.astuple(triangle.face.triangle_verts[2]), dc.astuple(triangle.face.triangle_verts[0]))
-  
+    if model.render_type == RenderType.TEXTURED:
+        pygame.surfarray.blit_array(surface, buffer)
+
 def main():  
     parser = argparse.ArgumentParser(description='Quake model viewer')
     parser.add_argument('quake_model', help='Quake model verison 2 md2 file')
@@ -40,9 +53,9 @@ def main():
     if not os.path.exists(pcx_filename):
         raise ValueError(f'Unable to find the texture for this quake model: {pcx_filename}')
     
-    model = QuakeModel()
+    model = QuakeModel(RenderType.WIREFRAME)
     model.from_file(quake_filename, pcx_filename)
-    model.rotate(270, 180, 90)
+    model.rotate(0, 180, 90)
     model.translate(70, -250, 70)
     model.scale(1)
       
@@ -51,12 +64,10 @@ def main():
       
     pygame.init()
     pygame.display.set_caption("Quake model viewer")
-    pygame.display.set_mode((1000, 1000), DOUBLEBUF)
+    pygame.display.set_mode((1000, 1000))
     
     fps = pygame.time.Clock()
-    # buffer = pygame.Surface((1000, 1000))    
-    buffer = np.zeros((1000, 1000), dtype=np.uint32)    
-    display_surface = pygame.Surface((1000, 1000), DOUBLEBUF)
+    display_surface = pygame.Surface((1000, 1000))
 
     while True:
         for event in pygame.event.get():
@@ -64,12 +75,13 @@ def main():
                 pygame.quit()
                 sys.exit()
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RIGHT:
-                    model.advance_frame()
-                    
-        buffer.fill(0)
-        draw_model_frame(graphics, model, buffer)
-        pygame.surfarray.blit_array(display_surface, buffer)
+                if event.key == pygame.K_w:
+                    model.render_type = RenderType.WIREFRAME
+                elif event.key == pygame.K_t:
+                    model.render_type = RenderType.TEXTURED
+
+        model.advance_frame()
+        draw_model_frame(graphics, model, display_surface)
         pygame.Surface.blit(pygame.display.get_surface(), display_surface, (0,0))
         pygame.display.update()
         

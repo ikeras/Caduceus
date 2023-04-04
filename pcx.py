@@ -19,9 +19,6 @@ class Pcx:
                 self.palette = self._read_palette(f)
             else:
                 raise ValueError('Unsupported PCX file format')                    
-        
-    def get_display_size(self):
-        return (self.header.x_max - self.header.x_min + 1, self.header.y_max - self.header.y_min + 1)        
     
     @property
     def height(self):
@@ -62,7 +59,7 @@ class Pcx:
                 image_data[decoded_bytes_read] = byte
                 decoded_bytes_read += 1
         
-        return image_data.reshape((y_size, x_size))
+        return image_data.reshape((x_size, y_size), order='F')
                     
     def _read_header(self, f):
         data = f.read(128)

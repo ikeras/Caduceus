@@ -14,15 +14,16 @@ from textured_triangle import TexturedTriangle
 class QuakeModel:
     Header = namedtuple('Header', 'skin_width skin_height frame_size num_skins num_vertices num_tex_coords num_faces num_gl_commands num_frames offset_skins offset_tex_coords offset_faces offset_frames offset_gl_commands offset_end')
     TexturedFace = namedtuple('TexturedFace', 'point_1 point_2 point_3 tex_index_1 tex_index_2 tex_index_3')
-    SkinTextureOffset = namedtuple('Skin_Texture_Offset', 's t')
-    TriangleVertex = namedtuple('Triangle_Vertex', 'x y z light_normal_index')
-    AnimationFrame = namedtuple('Animation_Frame', 'name frame_data')
+    SkinTextureOffset = namedtuple('SkinTextureOffset', 's t')
+    TriangleVertex = namedtuple('TriangleVertex', 'x y z light_normal_index')
+    AnimationFrame = namedtuple('AnimationFrame', 'name frame_data')
     Sequence = namedtuple('Sequence', 'name start_frame num_frames')
     
     VIEWING_DISTANCE = -1500
     
-    def __init__(self):
+    def __init__(self, render_type: RenderType):
         self._frame = 0
+        self._render_type = render_type
         self._sequence = 0
     
     def from_file(self, quake_filename, pcx_filename):
@@ -46,7 +47,15 @@ class QuakeModel:
         self._frame += 1
         
         if self._frame >= self.sequences[self._sequence].num_frames:
-            self._frame = self.sequences[self._sequence].start_frame
+            self._frame = self.sequences[self._sequence].start_frame        
+    
+    @property
+    def render_type(self):
+        return self._render_type
+    
+    @render_type.setter
+    def render_type(self, render_type: RenderType):
+        self._render_type = render_type
     
     def rotate(self, angle_x, angle_y, angle_z):
         self.rotation = (angle_x, angle_y, angle_z)
@@ -65,26 +74,26 @@ class QuakeModel:
                        self._world_coordinates[self.triangles[face_index].point_2][1] + \
                        self._world_coordinates[self.triangles[face_index].point_3][1] / 3
             
-            vertex_1 = Point2d(self._world_coordinates[self.triangles[face_index].point_1][0] / \
+            vertex_1 = Point2d(int(self._world_coordinates[self.triangles[face_index].point_1][0] / \
                                self._world_coordinates[self.triangles[face_index].point_1][1] * \
-                               QuakeModel.VIEWING_DISTANCE,
-                               self._world_coordinates[self.triangles[face_index].point_1][2] / \
+                               QuakeModel.VIEWING_DISTANCE),
+                               int(self._world_coordinates[self.triangles[face_index].point_1][2] / \
                                self._world_coordinates[self.triangles[face_index].point_1][1] * \
-                               QuakeModel.VIEWING_DISTANCE)
+                               QuakeModel.VIEWING_DISTANCE))
             
-            vertex_2 = Point2d(self._world_coordinates[self.triangles[face_index].point_2][0] / \
+            vertex_2 = Point2d(int(self._world_coordinates[self.triangles[face_index].point_2][0] / \
                                self._world_coordinates[self.triangles[face_index].point_2][1] * \
-                               QuakeModel.VIEWING_DISTANCE,
-                               self._world_coordinates[self.triangles[face_index].point_2][2] / \
+                               QuakeModel.VIEWING_DISTANCE),
+                               int(self._world_coordinates[self.triangles[face_index].point_2][2] / \
                                self._world_coordinates[self.triangles[face_index].point_2][1] * \
-                               QuakeModel.VIEWING_DISTANCE)
+                               QuakeModel.VIEWING_DISTANCE))
 
-            vertex_3 = Point2d(self._world_coordinates[self.triangles[face_index].point_3][0] / \
+            vertex_3 = Point2d(int(self._world_coordinates[self.triangles[face_index].point_3][0] / \
                                self._world_coordinates[self.triangles[face_index].point_3][1] * \
-                               QuakeModel.VIEWING_DISTANCE,
-                               self._world_coordinates[self.triangles[face_index].point_3][2] / \
+                               QuakeModel.VIEWING_DISTANCE),
+                               int(self._world_coordinates[self.triangles[face_index].point_3][2] / \
                                self._world_coordinates[self.triangles[face_index].point_3][1] * \
-                               QuakeModel.VIEWING_DISTANCE)
+                               QuakeModel.VIEWING_DISTANCE))
             
             skin_vertex_1 = Point2d(self.texture_offsets[self.triangles[face_index].tex_index_1].s, \
                                     self.texture_offsets[self.triangles[face_index].tex_index_1].t)
@@ -95,7 +104,7 @@ class QuakeModel:
             skin_vertex_3 = Point2d(self.texture_offsets[self.triangles[face_index].tex_index_3].s, \
                                     self.texture_offsets[self.triangles[face_index].tex_index_3].t)            
 
-            yield TexturedTriangle(RenderType.WIREFRAME, z_center, Face([vertex_1, vertex_2, vertex_3], [skin_vertex_1, skin_vertex_2, skin_vertex_3], self.texture))
+            yield TexturedTriangle(z_center, Face([vertex_1, vertex_2, vertex_3], [skin_vertex_1, skin_vertex_2, skin_vertex_3], self.texture))
     
     def _read_header(self, f):
         data = f.read(60)
