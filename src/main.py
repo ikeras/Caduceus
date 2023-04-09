@@ -8,17 +8,17 @@ import numpy as np
 import pygame
 from pygame.locals import *
 
+from character import Character
 from graphics import Graphics
-from model import QuakeModel
 from point2d import Point2d
 from render_type import RenderType
 
 buffer = np.zeros((1000, 1000), dtype=np.uint32)
 
-def draw_model_frame(graphics: Graphics, model: QuakeModel, surface: pygame.Surface):
-    triangles = sorted(model.triangle_in_frame(), key=lambda triangle: triangle.z_center)
+def draw_character_frame(graphics: Graphics, character: Character, surface: pygame.Surface):
+    triangles = sorted(character.triangle_in_frame(), key=lambda triangle: triangle.z_center)
     
-    if model.render_type == RenderType.TEXTURED:
+    if character.render_type == RenderType.TEXTURED:
         buffer = np.zeros((1000, 1000), dtype=np.uint32)
         for triangle in triangles:
             graphics.draw_textured_triangle(triangle.face, buffer)
@@ -32,21 +32,11 @@ def draw_model_frame(graphics: Graphics, model: QuakeModel, surface: pygame.Surf
 
 def main():  
     parser = argparse.ArgumentParser(description='Quake model viewer')
-    parser.add_argument('quake_model', help='Quake model verison 2 md2 file')
+    parser.add_argument('quake_model', help='Quake model verison 2 md2 file for the character')
+    parser.add_argument('weapon_model', help='Quake model verison 2 md2 file for the weapon')
     args = parser.parse_args()
     
-    quake_filename = args.quake_model
-    base_name, _ = os.path.splitext(quake_filename)
-    pcx_filename = base_name + '.pcx'
-    
-    if not os.path.exists(pcx_filename):
-        raise ValueError(f'Unable to find the texture for this quake model: {pcx_filename}')
-    
-    model = QuakeModel(RenderType.WIREFRAME)
-    model.from_file(quake_filename, pcx_filename)
-    model.rotate(0, 180, 90)
-    model.translate(70, -250, 70)
-    model.scale(1)
+    character = Character(RenderType.WIREFRAME, args.quake_model, args.weapon_model)
       
     graphics = Graphics()
     graphics.set_clip(Point2d(0, 0), Point2d(1000, 1000))
@@ -65,12 +55,12 @@ def main():
                 sys.exit()
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_w:
-                    model.render_type = RenderType.WIREFRAME
+                    character.render_type = RenderType.WIREFRAME
                 elif event.key == pygame.K_t:
-                    model.render_type = RenderType.TEXTURED
+                    character.render_type = RenderType.TEXTURED
 
-        model.advance_frame()
-        draw_model_frame(graphics, model, display_surface)
+        character.advance_frame()
+        draw_character_frame(graphics, character, display_surface)
         pygame.Surface.blit(pygame.display.get_surface(), display_surface, (0,0))
         pygame.display.update()
         
