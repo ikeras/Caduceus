@@ -37,7 +37,7 @@ class Pcx:
         data = f.read(self.color_table_size * 3)
         return np.frombuffer(data, dtype=np.uint8).reshape((self.color_table_size, 3)).tolist()
     
-    def _read_image(self, f: BufferedReader) -> NDArray[Shape[width, height], UInt8]:
+    def _read_image(self, f: BufferedReader) -> NDArray[Shape['*,*'], UInt8]:
         x_size = self.header.x_max - self.header.x_min + 1
         y_size = self.header.y_max - self.header.y_min + 1
         
