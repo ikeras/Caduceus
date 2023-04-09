@@ -1,12 +1,11 @@
 import argparse
 import dataclasses as dc
 import math as m
-import os
+from typing import Tuple
 import sys
 
 import numpy as np
 import pygame
-from pygame.locals import *
 
 from character import Character
 from graphics import Graphics
@@ -30,7 +29,14 @@ def draw_character_frame(graphics: Graphics, character: Character, surface: pyga
             pygame.draw.line(surface, (255, 255, 255), dc.astuple(triangle.face.triangle_verts[1]), dc.astuple(triangle.face.triangle_verts[2]))
             pygame.draw.line(surface, (255, 255, 255), dc.astuple(triangle.face.triangle_verts[2]), dc.astuple(triangle.face.triangle_verts[0]))
 
-def main():  
+def get_centered_sequence_name(character: Character, font: pygame.font.Font) -> Tuple[pygame.Surface, pygame.Rect]:
+    text_surface = font.render(character.sequence_name, True, (255, 255, 255))
+    text_rect = text_surface.get_rect()
+    text_rect.centerx = 500
+    
+    return text_surface, text_rect
+
+def main():   
     parser = argparse.ArgumentParser(description='Quake model viewer')
     parser.add_argument('quake_model', help='Quake model verison 2 md2 file for the character')
     parser.add_argument('weapon_model', help='Quake model verison 2 md2 file for the weapon')
@@ -45,8 +51,13 @@ def main():
     pygame.display.set_caption("Quake model viewer")
     pygame.display.set_mode((1000, 1000))
     
+    font = pygame.font.Font(None, 30)    
+    text_surface, text_rect = get_centered_sequence_name(character, font)
+    
     fps = pygame.time.Clock()
     display_surface = pygame.Surface((1000, 1000))
+    starting_mouse_pos = (0, 0)
+    rotating = False
 
     while True:
         for event in pygame.event.get():
@@ -58,9 +69,39 @@ def main():
                     character.render_type = RenderType.WIREFRAME
                 elif event.key == pygame.K_t:
                     character.render_type = RenderType.TEXTURED
+                elif event.key == pygame.K_EQUALS or event.key == pygame.K_PLUS or event.key == pygame.K_KP_PLUS:
+                    character.scale(character.size + 0.5)
+                elif event.key == pygame.K_MINUS or event.key == pygame.K_KP_MINUS:
+                    character.scale(character.size - 0.5)
+                elif event.key == pygame.K_RIGHT:
+                    character.advance_sequence()
+                    text_surface, text_rect = get_centered_sequence_name(character, font)
+                elif event.key == pygame.K_LEFT:
+                    character.previous_sequence()
+                    text_surface, text_rect = get_centered_sequence_name(character, font)
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 3:
+                    rotating = True
+                    starting_mouse_pos = pygame.mouse.get_pos()
+                elif event.button == 4:
+                    character.scale(character.size + 0.5)
+                elif event.button == 5:
+                    character.scale(character.size - 0.5)                
+            elif event.type == pygame.MOUSEMOTION:
+                if rotating:
+                    new_mouse_pos = pygame.mouse.get_pos()
+                    rotate_z = (character.rotate_z + new_mouse_pos[0] - starting_mouse_pos[0]) % 360
+                    character.rotate(character.rotate_x, character.rotate_y, rotate_z)
+            elif event.type == pygame.MOUSEBUTTONUP:
+                if event.button == 3:
+                    new_mouse_pos = pygame.mouse.get_pos()
+                    rotate_z = (character.rotate_z + new_mouse_pos[0] - starting_mouse_pos[0]) % 360
+                    character.rotate(character.rotate_x, character.rotate_y, rotate_z)
+                    rotating = False
 
         character.advance_frame()
         draw_character_frame(graphics, character, display_surface)
+        display_surface.blit(text_surface, text_rect)
         pygame.Surface.blit(pygame.display.get_surface(), display_surface, (0,0))
         pygame.display.update()
         

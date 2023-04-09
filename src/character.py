@@ -12,20 +12,14 @@ class Character:
 
         self._model = QuakeModel(render_type)
         self._model.from_file(quake_filename, character_pcx_filename)
-        self._model.rotate(0, 180, 90)
-        self._model.translate(70, -250, 70)
-        self._model.scale(1)
         
         self._weapon = QuakeModel(render_type)
         self._weapon.from_file(weapon_filename, weapon_pcx_filename)
-        self._weapon.rotate(0, 180, 90)
-        self._weapon.translate(70, -250, 70)
-        self._weapon.scale(1)        
-    
-    def advance_frame(self) -> None:
-        self._model.advance_frame()
-        self._weapon.advance_frame()
         
+        self.rotate(0, 180, 90)
+        self.translate(85, -250, 70)
+        self.scale(1)
+
     @property
     def render_type(self) -> RenderType:
         return self._model.render_type
@@ -35,11 +29,47 @@ class Character:
         self._model.render_type = render_type
         self._weapon.render_type = render_type
 
+    @property
+    def rotate_x(self) -> int:
+        return self._rotate_x
+
+    @property
+    def rotate_y(self) -> int:
+        return self._rotate_y
+
+    @property
+    def rotate_z(self) -> int:
+        return self._rotate_z
+    
+    @property
+    def size(self) -> float:
+        return self._size
+        
+    @property
+    def sequence_name(self) -> str:
+        return self._model.sequence_name
+     
+    def advance_frame(self) -> None:
+        self._model.advance_frame()
+        self._weapon.advance_frame()
+    
+    def advance_sequence(self) -> None:
+        self._model.advance_sequence()
+        self._weapon.advance_sequence()
+        
+    def previous_sequence(self) -> None:
+        self._model.previous_sequence()
+        self._weapon.previous_sequence()        
+            
     def rotate(self, angle_x: int, angle_y: int, angle_z: int) -> None:
+        self._rotate_x = angle_x
+        self._rotate_y = angle_y
+        self._rotate_z = angle_z
         self._model.rotate(angle_x, angle_y, angle_z)
         self._weapon.rotate(angle_x, angle_y, angle_z)
-        
+    
     def scale(self, scale: float) -> None:
+        self._size = scale
         self._model.scale(scale)
         self._weapon.scale(scale)
         
