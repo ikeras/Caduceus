@@ -16,30 +16,19 @@ from render_type import RenderType
 buffer = np.zeros((1000, 1000), dtype=np.uint32)
 
 def draw_model_frame(graphics: Graphics, model: QuakeModel, surface: pygame.Surface):
-    global buffer
-    
-    triangles = []
-    
-    for triangle in model.triangle_in_frame():
-        triangles.append(triangle)
-  
-    triangles.sort(key=lambda triangle: triangle.z_center)
+    triangles = sorted(model.triangle_in_frame(), key=lambda triangle: triangle.z_center)
     
     if model.render_type == RenderType.TEXTURED:
-        buffer.fill(0)
+        buffer = np.zeros((1000, 1000), dtype=np.uint32)
+        for triangle in triangles:
+            graphics.draw_textured_triangle(triangle.face, buffer)
+        pygame.surfarray.blit_array(surface, buffer)
     else:
         surface.fill(0)
-        
-    for triangle in triangles:
-        if model.render_type == RenderType.TEXTURED:
-            graphics.draw_textured_triangle(triangle.face, buffer)
-        else:
+        for triangle in triangles:
             pygame.draw.line(surface, (255, 255, 255), dc.astuple(triangle.face.triangle_verts[0]), dc.astuple(triangle.face.triangle_verts[1]))
             pygame.draw.line(surface, (255, 255, 255), dc.astuple(triangle.face.triangle_verts[1]), dc.astuple(triangle.face.triangle_verts[2]))
             pygame.draw.line(surface, (255, 255, 255), dc.astuple(triangle.face.triangle_verts[2]), dc.astuple(triangle.face.triangle_verts[0]))
-    
-    if model.render_type == RenderType.TEXTURED:
-        pygame.surfarray.blit_array(surface, buffer)
 
 def main():  
     parser = argparse.ArgumentParser(description='Quake model viewer')
