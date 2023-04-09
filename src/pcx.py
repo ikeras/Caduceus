@@ -1,6 +1,9 @@
 from collections import namedtuple
+from io import BufferedReader
 import struct
+from typing import List, Tuple
 
+from nptyping import NDArray, Shape, UInt8
 import numpy as np
 
 class Pcx:
@@ -10,7 +13,7 @@ class Pcx:
     
     Header = namedtuple('Header', 'manufacturer version encoding bits_per_pixel x_min y_min x_max y_max hres vres ega_palette reserved color_planes bytes_per_line palette_type filler')
     
-    def from_file(self, filename):
+    def from_file(self, filename: str) -> None:
         with open(filename, 'rb') as f:
             self.header = self._read_header(f)
             
@@ -21,20 +24,20 @@ class Pcx:
                 raise ValueError('Unsupported PCX file format')                    
     
     @property
-    def height(self):
+    def height(self) -> int:
         return self.header.y_max - self.header.y_min + 1
     
     @property
-    def width(self):
+    def width(self) -> int:
         return self.header.x_max - self.header.x_min + 1        
     
-    def _read_palette(self, f):
+    def _read_palette(self, f: BufferedReader) -> List[Tuple[int, int, int]]:
         # seek to the end of the file and then back 768 bytes to read the palette
         f.seek(self.palette_offset, 2)
         data = f.read(self.color_table_size * 3)
         return np.frombuffer(data, dtype=np.uint8).reshape((self.color_table_size, 3)).tolist()
     
-    def _read_image(self, f):
+    def _read_image(self, f: BufferedReader) -> NDArray[Shape[width, height], UInt8]:
         x_size = self.header.x_max - self.header.x_min + 1
         y_size = self.header.y_max - self.header.y_min + 1
         
@@ -61,6 +64,6 @@ class Pcx:
         
         return image_data.reshape((x_size, y_size), order='F')
                     
-    def _read_header(self, f):
+    def _read_header(self, f: BufferedReader) -> Header:
         data = f.read(128)
         return Pcx.Header._make(struct.unpack('<BBBBHHHHHH48sBBHH58s', data))

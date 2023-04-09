@@ -9,10 +9,6 @@ import pygame
 from pygame.locals import *
 
 from pcx import Pcx
-from graphics import Graphics
-from model import QuakeModel
-from point2d import Point2d
-from render_type import RenderType
 
 
 def main():  

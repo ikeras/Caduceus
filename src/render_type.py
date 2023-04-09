@@ -1,5 +1,5 @@
-from enum import Enum
+from enum import Enum, auto
 
 class RenderType(Enum):
-    WIREFRAME = 0,
-    TEXTURED = 1
+    WIREFRAME = auto(),
+    TEXTURED = auto()

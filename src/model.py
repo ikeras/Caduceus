@@ -1,6 +1,8 @@
 from collections import namedtuple
+from io import BufferedReader
 import re
 import struct
+from typing import Generator, List, Tuple
 
 import numpy as np
 
@@ -26,7 +28,7 @@ class QuakeModel:
         self._render_type = render_type
         self._sequence = 0
     
-    def from_file(self, quake_filename, pcx_filename):
+    def from_file(self, quake_filename: str, pcx_filename: str) -> None:
         with open(quake_filename, 'rb') as f:
             id = f.read(4)
             version = f.read(4)
@@ -43,30 +45,30 @@ class QuakeModel:
             
             self._world_coordinates = np.zeros((self.header.num_vertices, 3), dtype=np.float32)
     
-    def advance_frame(self):
+    def advance_frame(self) -> None:
         self._frame += 1
         
         if self._frame >= self.sequences[self._sequence].num_frames:
             self._frame = self.sequences[self._sequence].start_frame        
     
     @property
-    def render_type(self):
+    def render_type(self) -> RenderType:
         return self._render_type
     
     @render_type.setter
-    def render_type(self, render_type: RenderType):
+    def render_type(self, render_type: RenderType) -> None:
         self._render_type = render_type
     
-    def rotate(self, angle_x, angle_y, angle_z):
-        self.rotation = (angle_x, angle_y, angle_z)
+    def rotate(self, angle_x: int, angle_y: int, angle_z: int) -> None:
+        self._rotation = (angle_x, angle_y, angle_z)
         
-    def scale(self, scale):
-        self.scale = scale
+    def scale(self, scale: float) -> None:
+        self._scale = scale
         
-    def translate(self, x, y, z):
-        self.translation = (x, y, z)
+    def translate(self, x: int, y: int, z: int) -> None:
+        self._translation = (x, y, z)
         
-    def triangle_in_frame(self):
+    def triangle_in_frame(self) -> Generator[TexturedTriangle, None, None]:
         self._apply_transformations()
         
         for face_index in range(self.header.num_faces):
@@ -106,21 +108,21 @@ class QuakeModel:
 
             yield TexturedTriangle(z_center, Face([vertex_1, vertex_2, vertex_3], [skin_vertex_1, skin_vertex_2, skin_vertex_3], self.texture))
     
-    def _read_header(self, f):
+    def _read_header(self, f: BufferedReader) -> Header:
         data = f.read(60)
         return QuakeModel.Header._make(struct.unpack('<15i', data))
 
-    def _read_texture_offsets(self, f):
+    def _read_texture_offsets(self, f: BufferedReader) -> List[SkinTextureOffset]:
         f.seek(self.header.offset_tex_coords)
         data = f.read(self.header.num_tex_coords * 4)
         return [QuakeModel.SkinTextureOffset._make(struct.unpack('<2h', data[i:i+4])) for i in range(0, len(data), 4)]
 
-    def _read_faces(self, f):
+    def _read_faces(self, f: BufferedReader) -> List[TexturedFace]:
         f.seek(self.header.offset_faces)
         data = f.read(self.header.num_faces * 12)
         return [QuakeModel.TexturedFace._make(struct.unpack('<6h', data[i:i+12])) for i in range(0, len(data), 12)]
     
-    def _read_animation_frame(self, data, frame_index):
+    def _read_animation_frame(self, data: bytes, frame_index: int) -> Tuple[str, List[TriangleVertex]]:
             scale_x, scale_y, scale_z, translate_x, translate_y, translate_z, name = struct.unpack('<6f16s', data[frame_index * self.header.frame_size:frame_index * self.header.frame_size + 40])
             name = name.decode('utf-8').strip('\x00')
             name = re.sub(r'[^a-zA-Z]', '', name)
@@ -135,7 +137,7 @@ class QuakeModel:
                 
             return name, frame_data
     
-    def _read_animation_frames(self, f):
+    def _read_animation_frames(self, f: BufferedReader) -> None:
         f.seek(self.header.offset_frames)
         data = f.read(self.header.num_frames * self.header.frame_size)
         
@@ -162,25 +164,25 @@ class QuakeModel:
         self.sequences[num_sequences - 1] = self.sequences[num_sequences - 1]._replace(num_frames = self.header.num_frames - self.sequences[num_sequences - 1].start_frame)
         
     def _apply_transformations(self):
-        rotate = la.rotate_x(self.rotation[0]) @ la.rotate_y(self.rotation[1]) @ la.rotate_z(self.rotation[2])
+        rotate = la.rotate_x(self._rotation[0]) @ la.rotate_y(self._rotation[1]) @ la.rotate_z(self._rotation[2])
         
         frame = self.frames[self._frame]
         
         for index in range(self.header.num_vertices):
-            x = frame.frame_data[index].x * self.scale * rotate[0, 0] + \
-                frame.frame_data[index].y * self.scale * rotate[1, 0] + \
-                frame.frame_data[index].z * self.scale * rotate[2, 0] + \
-                self.translation[0]
+            x = frame.frame_data[index].x * self._scale * rotate[0, 0] + \
+                frame.frame_data[index].y * self._scale * rotate[1, 0] + \
+                frame.frame_data[index].z * self._scale * rotate[2, 0] + \
+                self._translation[0]
                                                 
-            y = frame.frame_data[index].x * self.scale * rotate[0, 1] + \
-                frame.frame_data[index].y * self.scale * rotate[1, 1] + \
-                frame.frame_data[index].z * self.scale * rotate[2, 1] + \
-                self.translation[1]
+            y = frame.frame_data[index].x * self._scale * rotate[0, 1] + \
+                frame.frame_data[index].y * self._scale * rotate[1, 1] + \
+                frame.frame_data[index].z * self._scale * rotate[2, 1] + \
+                self._translation[1]
             
-            z = frame.frame_data[index].x * self.scale * rotate[0, 2] + \
-                frame.frame_data[index].y * self.scale * rotate[1, 2] + \
-                frame.frame_data[index].z * self.scale * rotate[2, 2] + \
-                self.translation[2]
+            z = frame.frame_data[index].x * self._scale * rotate[0, 2] + \
+                frame.frame_data[index].y * self._scale * rotate[1, 2] + \
+                frame.frame_data[index].z * self._scale * rotate[2, 2] + \
+                self._translation[2]
             
             self._world_coordinates[index] = (x, y, z)   
             
