@@ -141,28 +141,27 @@ class QuakeModel:
                                     self._texture_offsets[face.tex_index_3].t)            
 
             yield TexturedTriangle(z_center, Face([vertex_1, vertex_2, vertex_3], [skin_vertex_1, skin_vertex_2, skin_vertex_3], self.texture))
-    
+   
     def _calculate_normals(self, frame_data: List[TriangleVertex]) -> NDArray[Shape['*, 3'], Float32]:
-        normals = np.zeros((self.header.num_faces, 3), dtype=np.float32)
+        u = np.empty((self.header.num_faces, 3), dtype=np.float32)
+        v = np.empty((self.header.num_faces, 3), dtype=np.float32)
         
         for face_index in range(self.header.num_faces):
-            u = np.array([frame_data[self._triangles[face_index].point_2].x - \
-                          frame_data[self._triangles[face_index].point_1].x, \
-                          frame_data[self._triangles[face_index].point_2].y - \
-                          frame_data[self._triangles[face_index].point_1].y, \
-                          frame_data[self._triangles[face_index].point_2].z - \
-                          frame_data[self._triangles[face_index].point_1].z])
+            u[face_index] = [frame_data[self._triangles[face_index].point_2].x - \
+                             frame_data[self._triangles[face_index].point_1].x, \
+                             frame_data[self._triangles[face_index].point_2].y - \
+                             frame_data[self._triangles[face_index].point_1].y, \
+                             frame_data[self._triangles[face_index].point_2].z - \
+                             frame_data[self._triangles[face_index].point_1].z]
 
-            v = np.array([frame_data[self._triangles[face_index].point_3].x - \
-                          frame_data[self._triangles[face_index].point_2].x, \
-                          frame_data[self._triangles[face_index].point_3].y - \
-                          frame_data[self._triangles[face_index].point_2].y, \
-                          frame_data[self._triangles[face_index].point_3].z - \
-                          frame_data[self._triangles[face_index].point_2].z])            
-            
-            normals[face_index] = np.cross(u, v)
-        
-        return normals            
+            v[face_index] = [frame_data[self._triangles[face_index].point_3].x - \
+                             frame_data[self._triangles[face_index].point_2].x, \
+                             frame_data[self._triangles[face_index].point_3].y - \
+                             frame_data[self._triangles[face_index].point_2].y, \
+                             frame_data[self._triangles[face_index].point_3].z - \
+                             frame_data[self._triangles[face_index].point_2].z]
+
+        return np.cross(u, v)
     
     def _read_header(self, f: BufferedReader) -> Header:
         data = f.read(60)

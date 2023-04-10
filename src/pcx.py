@@ -31,11 +31,11 @@ class Pcx:
     def width(self) -> int:
         return self.header.x_max - self.header.x_min + 1        
     
-    def _read_palette(self, f: BufferedReader) -> List[Tuple[int, int, int]]:
+    def _read_palette(self, f: BufferedReader) -> NDArray[Shape['768, 3'], UInt8]:
         # seek to the end of the file and then back 768 bytes to read the palette
         f.seek(self.palette_offset, 2)
         data = f.read(self.color_table_size * 3)
-        return np.frombuffer(data, dtype=np.uint8).reshape((self.color_table_size, 3)).tolist()
+        return np.frombuffer(data, dtype=np.uint8).reshape((self.color_table_size, 3))
     
     def _read_image(self, f: BufferedReader) -> NDArray[Shape['*,*'], UInt8]:
         x_size = self.header.x_max - self.header.x_min + 1

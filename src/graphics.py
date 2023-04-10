@@ -162,9 +162,9 @@ class Graphics:
             source_y += source_step_y * count
             dest_x = self._min.x
         
-        for count in range(round(dest_x), round(dest_x_max)):
+        for count in range(dest_x, dest_x_max):
             color = face.texture.palette[face.texture.image_data[round(source_x), round(source_y)]]
-            buffer[count, round(dest_y)] = 0xFF000000 | (color[0] << 16) | (color[1] << 8) | color[2]
+            buffer[count, dest_y] = 0xFF000000 | (color[0] << 16) | (color[1] << 8) | color[2]
         
             source_x += source_step_x
             source_y += source_step_y
