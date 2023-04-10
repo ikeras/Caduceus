@@ -7,8 +7,16 @@ from edge_scan import EdgeScan
 from face import Face
 from point2d import Point2d
 
+# This class is based the code from Lamothe, M. (1997). Zen of Graphics Programming, 2nd Edition: Master the Art of Creating Fast PC Games and Graphics Applications. The Coriolis Group.
+
 class Graphics:
     def draw_textured_triangle(self, face: Face, buffer: NDArray[Shape['*,*'], UInt32]) -> None:
+        """Draws a textured triangle to the buffer.
+
+        Args:
+            face (Face): The face to draw.
+            buffer (NDArray[Shape['*,*'], Uint32]): The buffer to draw to.
+        """
         done = False
         min_y: int
         max_y: int
@@ -58,11 +66,28 @@ class Graphics:
             
             dest_y += 1
     
-    def set_clip(self, min: Point2d, max: Point2d):
+    def set_clip(self, min: Point2d, max: Point2d) -> None:
+        """Sets the clipping rectangle.
+        
+        Arguments:
+            min {Point2d} -- The minimum point of the rectangle.
+            max {Point2d} -- The maximum point of the rectangle.
+        """
         self._min = min
         self._max = max
                 
     def _set_up_edge(self, edge: EdgeScan, face: Face, start_vertex: int, max_vertex: int) -> bool:
+        """Sets up an edge scan.
+
+        Args:
+            edge (EdgeScan): The edge scan to set up.
+            face (Face): The face to set up the edge scan for.
+            start_vertex (int): The starting vertex.
+            max_vertex (int): The maximum vertex.
+
+        Returns:
+            bool: Whether the edge scan was set up successfully.
+        """
         done = False
         next_vertex: int
         dest_x_width: int
@@ -108,6 +133,16 @@ class Graphics:
         return True
     
     def _step_edge(self, edge: EdgeScan, face: Face, max_vertex: int) -> bool:
+        """Steps an edge scan.
+
+        Args:
+            edge (EdgeScan): The edge scan to step.
+            face (Face): The face to step the edge scan for.
+            max_vertex (int): The maximum vertex.
+
+        Returns:
+            bool: If the edge scan was stepped successfully.
+        """
         edge.remaining_scans -= 1
         
         if edge.remaining_scans <= 0:
@@ -125,6 +160,15 @@ class Graphics:
         return True
     
     def _scan_out_line(self, face: Face, left_edge: EdgeScan, right_edge: EdgeScan, buffer: NDArray[Shape['*,*'], UInt32], dest_y: int) -> None:
+        """Scan out a line.
+
+        Args:
+            face (Face): The face to scan out the line for.
+            left_edge (EdgeScan): The left edge scan.
+            right_edge (EdgeScan): The right edge scan.
+            buffer (NDArray[Shape['*,*'], UInt32]): The buffer to scan out the line to.
+            dest_y (int): The destination y coordinate.
+        """
         source_x: float
         source_y: float
         dest_width: float

@@ -1,6 +1,4 @@
 import argparse
-import dataclasses as dc
-import math as m
 import os
 import sys
 
@@ -9,8 +7,12 @@ import pygame
 
 from pcx import Pcx
 
-
 def main():  
+    """A simple program to view a pcx file from a Quake model.
+
+    Raises:
+        ValueError: If there isn't a texture file for the model.
+    """
     parser = argparse.ArgumentParser(description='Quake model viewer')
     parser.add_argument('quake_model', help='Quake model verison 2 md2 file')
     args = parser.parse_args()

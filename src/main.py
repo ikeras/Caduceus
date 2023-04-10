@@ -15,6 +15,13 @@ from render_type import RenderType
 buffer = np.zeros((1000, 1000), dtype=np.uint32)
 
 def draw_character_frame(graphics: Graphics, character: Character, surface: pygame.Surface):
+    """Renders all of the triangles in the character's current frame to the surface.
+
+    Args:
+        graphics (Graphics): A graphics object used to draw textured triangles.
+        character (Character): The character to render.
+        surface (pygame.Surface): The surface to render the character to.
+    """
     triangles = sorted(character.triangle_in_frame(), key=lambda triangle: triangle.z_center)
     
     if character.render_type == RenderType.TEXTURED:
@@ -30,13 +37,23 @@ def draw_character_frame(graphics: Graphics, character: Character, surface: pyga
             pygame.draw.line(surface, (255, 255, 255), dc.astuple(triangle.face.triangle_verts[2]), dc.astuple(triangle.face.triangle_verts[0]))
 
 def get_centered_sequence_name(character: Character, font: pygame.font.Font) -> Tuple[pygame.Surface, pygame.Rect]:
+    """Creates a surface and rect for the character's sequence name centered on the screen.
+
+    Args:
+        character (Character): The character to get the sequence name from.
+        font (pygame.font.Font): The font to use for the text.
+
+    Returns:
+        Tuple[pygame.Surface, pygame.Rect]: The surface and rect for the text.
+    """
     text_surface = font.render(character.sequence_name, True, (255, 255, 255))
     text_rect = text_surface.get_rect()
     text_rect.centerx = 500
     
     return text_surface, text_rect
 
-def main():   
+def main():
+    """A simple viewer for Quake model version 2 md2 files."""
     parser = argparse.ArgumentParser(description='Quake model viewer')
     parser.add_argument('quake_model', help='Quake model verison 2 md2 file for the character')
     parser.add_argument('weapon_model', help='Quake model verison 2 md2 file for the weapon')
